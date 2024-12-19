@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Filter from "./components/filter";
 import PersonForm from "./components/personForm";
 import Persons from "./components/perons";
 import noteService from "./services/person";
+import Notification from "./components/notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [notification, setNotification] = useState({ message: null, type: "" });
 
   useEffect(() => {
     noteService.getAll().then((response) => {
@@ -28,20 +29,40 @@ const App = () => {
         number: newNumber,
       };
 
-      noteService.create(nameObject).then((response) => {
-        setPersons(persons.concat(response.data));
-        setNewName("");
-        setNewNumber("");
-      });
+      noteService
+        .create(nameObject)
+        .then((response) => {
+          setPersons(persons.concat(response.data));
+          setNewName("");
+          setNewNumber("");
+          showNotification(`Added ${response.data.name}`, "success");
+        })
+        .catch((error) => {
+          showNotification("failed to add person. Please try again");
+        });
     }
   };
 
   const deletePerson = (id, name) => {
     if (window.confirm(`Delete ${name}`)) {
-      noteService.remove(id).then(() => {
-        setPersons(persons.filter((person) => person.id !== id));
-      });
+      noteService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter((person) => person.id !== id));
+          showNotification(`Deleted ${name}`, "success");
+        })
+        .catch((error) => {
+          showNotification(
+            `Failed to delete ${name}. It may have already been removed.`,
+            "error"
+          );
+        });
     }
+  };
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification({ message: null, type: "" }), 5000);
   };
 
   const handleNameChange = (evnet) => {
@@ -65,6 +86,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification.message} type={notification.type} />
       <Filter value={searchTerm} onChange={handleSearchChange} />
       <h2>Numbers</h2>
       <PersonForm
