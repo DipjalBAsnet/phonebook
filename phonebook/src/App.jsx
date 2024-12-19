@@ -3,7 +3,7 @@ import axios from "axios";
 import Filter from "./components/filter";
 import PersonForm from "./components/personForm";
 import Persons from "./components/perons";
-import noteService from "./services/persons";
+import noteService from "./services/person";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -32,6 +32,14 @@ const App = () => {
         setPersons(persons.concat(response.data));
         setNewName("");
         setNewNumber("");
+      });
+    }
+  };
+
+  const deletePerson = (id, name) => {
+    if (window.confirm(`Delete ${name}`)) {
+      noteService.remove(id).then(() => {
+        setPersons(persons.filter((person) => person.id !== id));
       });
     }
   };
@@ -66,7 +74,7 @@ const App = () => {
         newNumber={newNumber}
         handleNumberChange={handleNumberChange}
       />
-      <Persons personToShow={personToShow} />
+      <Persons personToShow={personToShow} onDelete={deletePerson} />
     </div>
   );
 };
